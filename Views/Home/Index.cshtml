@@ -292,7 +292,7 @@
             const res = await response.json();
             if (res.sucesso) {
                 const msg = `*NOVO AGENDAMENTO!* ✂️\n\n👤 *Cliente:* ${payload.NomeCliente}\n📱 *Contato:* ${payload.Telefone}\n💈 *Serviço:* ${payload.ServicoNome}\n📅 *Data:* ${payload.Data}\n⏰ *Hora:* ${payload.Hora}`;
-                window.open(`https://wa.me/5516999999999?text=${encodeURIComponent(msg)}`, '_blank');
+                window.open(`https://wa.me/5516991044804?text=${encodeURIComponent(msg)}`, '_blank');
                 location.reload();
             } else {
                 alert("Erro ao salvar o agendamento.");
