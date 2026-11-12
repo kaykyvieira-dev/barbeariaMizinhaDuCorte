@@ -106,7 +106,8 @@
                         <i class="ph-bold ph-package text-xl"></i>
                     </div>
                     <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">@p.Nome</h3>
-                    <p class="text-brand font-black text-xl">R$ @p.Preco.ToString("N2")</p>
+                    <p class="text-brand font-black text-xl mb-1">R$ @p.Preco.ToString("N2")</p>
+                    <p class="text-xs text-slate-400">Estoque: @p.Quantidade</p>
                 </div>
             }
         </div>
@@ -162,12 +163,23 @@
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Serviço Desejado</label>
-                <select id="cli-servico" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-brand">
-                    <option value="" disabled selected>Escolha o serviço...</option>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Serviço Desejado (Opcional se comprar produto)</label>
+                <select id="cli-servico" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-brand">
+                    <option value="" selected>Nenhum serviço (Apenas comprar produto)</option>
                     @foreach (var s in servicos)
                     {
-                        <option value="@s.Nome" data-preco="@s.Preco">@s.Nome - R$ @s.Preco.ToString("N2")</option>
+                        <option value="@s.Id" data-nome="@s.Nome" data-preco="@s.Preco">@s.Nome - R$ @s.Preco.ToString("N2")</option>
+                    }
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Deseja Adicionar um Produto?</label>
+                <select id="cli-produto" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-brand">
+                    <option value="" selected>Nenhum produto</option>
+                    @foreach (var p in produtos.Where(x => x.Quantidade > 0))
+                    {
+                        <option value="@p.Id" data-nome="@p.Nome" data-preco="@p.Preco">@p.Nome - R$ @p.Preco.ToString("N2") (Estoque: @p.Quantidade)</option>
                     }
                 </select>
             </div>
@@ -248,7 +260,7 @@
             showSlide(next);
         }, 5000);
 
-        // Lógica do Agendamento
+        // Lógica para carregar horários disponíveis
         document.getElementById('cli-data').addEventListener('change', async (e) => {
             const dataStr = e.target.value;
             const selectHora = document.getElementById('cli-hora');
@@ -269,16 +281,42 @@
             }
         });
 
+        // Envio do formulário de agendamento/compra
         document.getElementById('form-agendamento-csharp').addEventListener('submit', async (e) => {
             e.preventDefault();
+
             const selectServico = document.getElementById('cli-servico');
-            const preco = parseFloat(selectServico.options[selectServico.selectedIndex].getAttribute('data-preco'));
+            const selectProduto = document.getElementById('cli-produto');
+
+            const servicoId = selectServico.value ? parseInt(selectServico.value) : null;
+            const produtoId = selectProduto.value ? parseInt(selectProduto.value) : null;
+
+            if (!servicoId && !produtoId) {
+                alert("Por favor, escolha pelo menos um serviço ou um produto.");
+                return;
+            }
+
+            let servicoNome = "Nenhum";
+            let precoServico = 0;
+            if (selectServico.value) {
+                const optServico = selectServico.options[selectServico.selectedIndex];
+                servicoNome = optServico.getAttribute('data-nome');
+                precoServico = parseFloat(optServico.getAttribute('data-preco'));
+            }
+
+            let produtoNome = "";
+            if (selectProduto.value) {
+                const optProduto = selectProduto.options[selectProduto.selectedIndex];
+                produtoNome = optProduto.getAttribute('data-nome');
+            }
 
             const payload = {
                 NomeCliente: document.getElementById('cli-nome').value,
                 Telefone: document.getElementById('cli-telefone').value,
-                ServicoNome: selectServico.value,
-                PrecoServico: preco,
+                ServicoId: servicoId,
+                ServicoNome: servicoNome,
+                PrecoServico: precoServico,
+                ProdutoId: produtoId,
                 Data: document.getElementById('cli-data').value,
                 Hora: document.getElementById('cli-hora').value
             };
@@ -291,11 +329,16 @@
 
             const res = await response.json();
             if (res.sucesso) {
-                const msg = `*NOVO AGENDAMENTO!* ✂️\n\n👤 *Cliente:* ${payload.NomeCliente}\n📱 *Contato:* ${payload.Telefone}\n💈 *Serviço:* ${payload.ServicoNome}\n📅 *Data:* ${payload.Data}\n⏰ *Hora:* ${payload.Hora}`;
+                let msg = `*NOVO PEDIDO/AGENDAMENTO!* ✂️\n\n👤 *Cliente:* ${payload.NomeCliente}\n📱 *Contato:* ${payload.Telefone}\n💈 *Serviço:* ${servicoNome}`;
+                if (produtoNome) {
+                    msg += `\n📦 *Produto:* ${produtoNome}`;
+                }
+                msg += `\n📅 *Data:* ${payload.Data}\n⏰ *Hora:* ${payload.Hora}`;
+
                 window.open(`https://wa.me/5516991044804?text=${encodeURIComponent(msg)}`, '_blank');
                 location.reload();
             } else {
-                alert("Erro ao salvar o agendamento.");
+                alert("Erro ao salvar o agendamento: " + (res.mensagem || "Tente novamente."));
             }
         });
     </script>
