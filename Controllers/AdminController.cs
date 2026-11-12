@@ -88,8 +88,8 @@ public class AdminController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Login(string usuario, string senha)
     {
-        string supabaseUrl = _configuration["Supabase:Url"] ?? string.Empty;
-        string supabaseKey = _configuration["Supabase:AnonKey"] ?? string.Empty;
+        string supabaseUrl = (_configuration["Supabase:Url"] ?? string.Empty).Trim().TrimEnd('/');
+        string supabaseKey = (_configuration["Supabase:AnonKey"] ?? string.Empty).Trim();
 
         using var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Add("apikey", supabaseKey);
