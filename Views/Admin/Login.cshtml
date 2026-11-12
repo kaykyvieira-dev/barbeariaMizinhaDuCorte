@@ -1,0 +1,62 @@
+﻿@{
+    ViewData["Title"] = "Login do Administrador";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - MizinhaDuCorte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { brand: '#EAB308', darkbg: '#0F172A', darkcard: '#1E293B' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl space-y-6">
+        <div class="text-center space-y-2">
+            <div class="w-16 h-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-2">
+                <i class="ph-fill ph-scissors text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-black text-white tracking-tight">MIZINHA<span class="text-brand">DUCORTE</span></h1>
+            <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Acesso Restrito ao Painel</p>
+        </div>
+
+        @if (ViewBag.Erro != null)
+        {
+            <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-xl text-center font-semibold">
+                @ViewBag.Erro
+            </div>
+        }
+
+        <form method="post" action="/Admin/Login" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase mb-2">E-mail do Administrador</label>
+                <input type="email" name="usuario" required placeholder="admin@mizinhaducorte.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand transition text-sm" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Senha</label>
+                <input type="password" name="senha" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand transition text-sm" />
+            </div>
+            <button type="submit" class="w-full bg-brand text-slate-950 font-black py-3 rounded-xl text-base hover:brightness-110 transition shadow-lg shadow-brand/20">
+                Entrar no Painel 🔒
+            </button>
+        </form>
+
+        <div class="text-center pt-2">
+            <a href="/" class="text-xs text-slate-500 hover:text-slate-300 transition flex items-center justify-center gap-1">
+                <i class="ph-bold ph-arrow-left"></i> Voltar para o Agendamento
+            </a>
+        </div>
+    </div>
+</body>
+</html>

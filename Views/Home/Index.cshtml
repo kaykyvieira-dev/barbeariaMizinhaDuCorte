@@ -1,0 +1,302 @@
+﻿@using MizinhaDuCorte.Models
+@{
+    ViewData["Title"] = "Barbearia Premium";
+    var servicos = ViewBag.Servicos as List<Servico> ?? new List<Servico>();
+    var produtos = ViewBag.Produtos as List<Produto> ?? new List<Produto>();
+    var diasAbertos = ViewBag.DiasAbertos as List<DiaAberto> ?? new List<DiaAberto>();
+}
+
+<!-- Carrossel Hero de Imagens -->
+<section class="relative bg-black text-white overflow-hidden">
+    <div id="carousel-slides" class="relative w-full h-[420px] md:h-[550px]">
+        <!-- Slide 1 -->
+        <div class="carousel-item absolute inset-0 transition-opacity duration-1000 opacity-100 bg-cover bg-center flex items-center justify-center text-center px-4"
+             style="background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1600');">
+            <div class="max-w-4xl space-y-4">
+                <h1 class="text-4xl md:text-6xl font-black tracking-tight uppercase leading-tight">
+                    CORTE & <span class="text-brand">BARBOTERAPIA</span>
+                </h1>
+                <p class="text-lg md:text-xl text-slate-300 font-medium">A verdadeira experiência de cavalheiro.</p>
+            </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="carousel-item absolute inset-0 transition-opacity duration-1000 opacity-0 pointer-events-none bg-cover bg-center flex items-center justify-center text-center px-4"
+             style="background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=1600');">
+            <div class="max-w-4xl space-y-4">
+                <h1 class="text-4xl md:text-6xl font-black tracking-tight uppercase leading-tight">
+                    ESTILO & <span class="text-brand">TRADIÇÃO</span>
+                </h1>
+                <p class="text-lg md:text-xl text-slate-300 font-medium">Técnicas clássicas com acabamento impecável.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="carousel-item absolute inset-0 transition-opacity duration-1000 opacity-0 pointer-events-none bg-cover bg-center flex items-center justify-center text-center px-4"
+             style="background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=1600');">
+            <div class="max-w-4xl space-y-4">
+                <h1 class="text-4xl md:text-6xl font-black tracking-tight uppercase leading-tight">
+                    VISAGISMO <span class="text-brand">MASCULINO</span>
+                </h1>
+                <p class="text-lg md:text-xl text-slate-300 font-medium">Valorize seu visual com quem entende do assunto.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegação do Carrossel (Setas e Indicadores) -->
+    <button id="carousel-prev" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-3 rounded-full transition">
+        <i class="ph-bold ph-caret-left text-xl"></i>
+    </button>
+    <button id="carousel-next" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-3 rounded-full transition">
+        <i class="ph-bold ph-caret-right text-xl"></i>
+    </button>
+
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3">
+        <button class="carousel-dot w-3 h-3 rounded-full bg-brand transition-all"></button>
+        <button class="carousel-dot w-3 h-3 rounded-full bg-white/40 transition-all"></button>
+        <button class="carousel-dot w-3 h-3 rounded-full bg-white/40 transition-all"></button>
+    </div>
+</section>
+
+<!-- Secção Sobre -->
+<section id="sobre" class="py-16 bg-white dark:bg-slate-900 text-center px-4 transition-colors">
+    <div class="max-w-3xl mx-auto space-y-3">
+        <span class="text-brand font-bold text-xs uppercase tracking-widest block">CONHEÇA A</span>
+        <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">MizinhaDuCorte</h2>
+        <p class="text-slate-600 dark:text-slate-300 text-sm md:text-base leading-relaxed pt-2">
+            Mais do que um simples corte de cabelo, oferecemos uma experiência de resgate da autoestima.
+            Localizada em Jardinópolis, a MizinhaDuCorte une técnicas clássicas às tendências mais modernas do visagismo masculino num ambiente feito para você relaxar.
+        </p>
+    </div>
+</section>
+
+<!-- Secção Nossos Serviços -->
+<section id="servicos" class="py-16 bg-slate-50 dark:bg-slate-950 text-center px-4 border-t border-slate-100 dark:border-slate-800 transition-colors">
+    <div class="max-w-5xl mx-auto space-y-10">
+        <h2 class="text-3xl font-black tracking-tight uppercase text-slate-900 dark:text-white">
+            NOSSOS <span class="text-brand">SERVIÇOS</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @foreach (var s in servicos)
+            {
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-brand/50 transition-all text-center">
+                    <div class="w-12 h-12 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="ph-fill ph-scissors text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">@s.Nome</h3>
+                    <p class="text-xs text-slate-400 mb-3">⏱️ @s.Tempo</p>
+                    <p class="text-brand font-black text-2xl">R$ @s.Preco.ToString("N2")</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Secção Nossos Produtos -->
+<section id="produtos" class="py-16 bg-white dark:bg-slate-900 text-center px-4 transition-colors">
+    <div class="max-w-5xl mx-auto space-y-10">
+        <h2 class="text-3xl font-black tracking-tight uppercase text-slate-900 dark:text-white">
+            NOSSOS <span class="text-brand">PRODUTOS</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @foreach (var p in produtos)
+            {
+                <div class="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center">
+                    <div class="w-12 h-12 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                        <i class="ph-bold ph-package text-xl"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">@p.Nome</h3>
+                    <p class="text-brand font-black text-xl">R$ @p.Preco.ToString("N2")</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Secção Onde Estamos -->
+<section id="localizacao" class="py-16 bg-slate-50 dark:bg-slate-950 text-center px-4 border-t border-slate-100 dark:border-slate-800 transition-colors">
+    <div class="max-w-5xl mx-auto space-y-8">
+        <h2 class="text-3xl font-black tracking-tight uppercase text-slate-900 dark:text-white">
+            ONDE <span class="text-brand">ESTAMOS</span>
+        </h2>
+
+        <div class="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 items-center text-left">
+            <div class="space-y-3">
+                <div class="flex items-start gap-4">
+                    <div class="text-brand text-2xl mt-1">
+                        <i class="ph-fill ph-map-pin"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Rua João Manuel da Cruz, 401</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">Jardinópolis, SP</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full h-64 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-inner">
+                <iframe class="w-full h-full border-0"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3723.1895827364!2d-47.7634!3d-21.0631!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94b9b005118f7dbf%3A0x6b245a498b368798!2sRua%20Jo%C3%A3o%20Manuel%20da%20Cruz%2C%20401%2C%20Jardin%C3%B3polis%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1700000000000"
+                        allowfullscreen="" loading="lazy">
+                </iframe>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Secção Agendamento -->
+<section id="agendar" class="py-16 bg-slate-100 dark:bg-slate-900 px-4 transition-colors">
+    <div class="max-w-md mx-auto bg-white dark:bg-slate-950 p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 text-center space-y-6">
+        <h2 class="text-2xl font-black text-slate-900 dark:text-white">
+            Reserve seu <span class="text-brand">Horário</span>
+        </h2>
+
+        <form id="form-agendamento-csharp" class="space-y-4 text-left">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Seu Nome</label>
+                <input type="text" id="cli-nome" required placeholder="Digite seu nome" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-brand" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Seu WhatsApp</label>
+                <input type="tel" id="cli-telefone" required placeholder="(16) 99999-9999" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-brand" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Serviço Desejado</label>
+                <select id="cli-servico" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-brand">
+                    <option value="" disabled selected>Escolha o serviço...</option>
+                    @foreach (var s in servicos)
+                    {
+                        <option value="@s.Nome" data-preco="@s.Preco">@s.Nome - R$ @s.Preco.ToString("N2")</option>
+                    }
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Data</label>
+                    <select id="cli-data" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-brand">
+                        <option value="" disabled selected>Escolha a data...</option>
+                        @foreach (var d in diasAbertos)
+                        {
+                            <option value="@d.Data.ToString("yyyy-MM-dd")">@d.Data.ToString("dd/MM/yyyy")</option>
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Horário</label>
+                    <select id="cli-hora" required disabled class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-brand disabled:opacity-50">
+                        <option value="" disabled selected>Escolha a data...</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-brand text-slate-950 font-black py-4 rounded-xl text-base hover:bg-brandHover transition flex items-center justify-center gap-2 shadow-lg shadow-brand/20">
+                <i class="ph-fill ph-whatsapp-logo text-xl"></i> Agendar pelo WhatsApp
+            </button>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Lógica do Carrossel de Imagens
+        const items = document.querySelectorAll('.carousel-item');
+        const dots = document.querySelectorAll('.carousel-dot');
+        let currentIndex = 0;
+
+        function showSlide(index) {
+            items.forEach((item, idx) => {
+                if (idx === index) {
+                    item.classList.remove('opacity-0', 'pointer-events-none');
+                    item.classList.add('opacity-100');
+                } else {
+                    item.classList.remove('opacity-100');
+                    item.classList.add('opacity-0', 'pointer-events-none');
+                }
+            });
+
+            dots.forEach((dot, idx) => {
+                if (idx === index) {
+                    dot.classList.remove('bg-white/40');
+                    dot.classList.add('bg-brand');
+                } else {
+                    dot.classList.remove('bg-brand');
+                    dot.classList.add('bg-white/40');
+                }
+            });
+            currentIndex = index;
+        }
+
+        document.getElementById('carousel-prev')?.addEventListener('click', () => {
+            let prev = (currentIndex - 1 + items.length) % items.length;
+            showSlide(prev);
+        });
+
+        document.getElementById('carousel-next')?.addEventListener('click', () => {
+            let next = (currentIndex + 1) % items.length;
+            showSlide(next);
+        });
+
+        dots.forEach((dot, idx) => {
+            dot.addEventListener('click', () => showSlide(idx));
+        });
+
+        setInterval(() => {
+            let next = (currentIndex + 1) % items.length;
+            showSlide(next);
+        }, 5000);
+
+        // Lógica do Agendamento
+        document.getElementById('cli-data').addEventListener('change', async (e) => {
+            const dataStr = e.target.value;
+            const selectHora = document.getElementById('cli-hora');
+            selectHora.disabled = true;
+            selectHora.innerHTML = '<option value="" disabled selected>Carregando...</option>';
+
+            const response = await fetch(`/Home/ObterHorariosDisponiveis?data=${dataStr}`);
+            const horarios = await response.json();
+
+            if (horarios.length === 0) {
+                selectHora.innerHTML = '<option value="" disabled selected>Sem horários</option>';
+            } else {
+                selectHora.innerHTML = '<option value="" disabled selected>Escolha a hora...</option>';
+                horarios.forEach(h => {
+                    selectHora.innerHTML += `<option value="${h}">${h}</option>`;
+                });
+                selectHora.disabled = false;
+            }
+        });
+
+        document.getElementById('form-agendamento-csharp').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const selectServico = document.getElementById('cli-servico');
+            const preco = parseFloat(selectServico.options[selectServico.selectedIndex].getAttribute('data-preco'));
+
+            const payload = {
+                NomeCliente: document.getElementById('cli-nome').value,
+                Telefone: document.getElementById('cli-telefone').value,
+                ServicoNome: selectServico.value,
+                PrecoServico: preco,
+                Data: document.getElementById('cli-data').value,
+                Hora: document.getElementById('cli-hora').value
+            };
+
+            const response = await fetch('/Home/CriarAgendamento', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const res = await response.json();
+            if (res.sucesso) {
+                const msg = `*NOVO AGENDAMENTO!* ✂️\n\n👤 *Cliente:* ${payload.NomeCliente}\n📱 *Contato:* ${payload.Telefone}\n💈 *Serviço:* ${payload.ServicoNome}\n📅 *Data:* ${payload.Data}\n⏰ *Hora:* ${payload.Hora}`;
+                window.open(`https://wa.me/5516999999999?text=${encodeURIComponent(msg)}`, '_blank');
+                location.reload();
+            } else {
+                alert("Erro ao salvar o agendamento.");
+            }
+        });
+    </script>
+}

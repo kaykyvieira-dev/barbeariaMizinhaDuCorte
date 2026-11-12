@@ -1,0 +1,532 @@
+﻿@model IEnumerable<MizinhaDuCorte.Models.Agendamento>
+@using MizinhaDuCorte.Models
+@using System.Globalization
+@{
+    ViewData["Title"] = "Painel de Controle";
+    Layout = null;
+
+    var culturePt = new CultureInfo("pt-BR");
+
+    var servicos = ViewBag.Servicos as List<Servico> ?? new List<Servico>();
+    var produtos = ViewBag.Produtos as List<Produto> ?? new List<Produto>();
+    var diasAbertos = ViewBag.DiasAbertos as List<DiaAberto> ?? new List<DiaAberto>();
+    var bloqueios = ViewBag.Bloqueios as List<Bloqueio> ?? new List<Bloqueio>();
+
+    decimal faturamento = ViewBag.Faturamento != null ? (decimal)ViewBag.Faturamento : 0;
+    int totalClientes = ViewBag.TotalClientes != null ? (int)ViewBag.TotalClientes : 0;
+    string filtroAtual = ViewBag.FiltroAtual as string ?? "mes";
+
+    int mesAtual = ViewBag.MesAtual != null ? (int)ViewBag.MesAtual : DateTime.Today.Month;
+    int anoAtual = ViewBag.AnoAtual != null ? (int)ViewBag.AnoAtual : DateTime.Today.Year;
+    string nomeMes = ViewBag.NomeMes as string ?? "";
+
+    int diasNoMes = DateTime.DaysInMonth(anoAtual, mesAtual);
+    DateTime primeiroDiaMes = new DateTime(anoAtual, mesAtual, 1);
+    int diaDaSemanaInicio = (int)primeiroDiaMes.DayOfWeek;
+}
+
+<!DOCTYPE html>
+<html lang="pt-br" class="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel da Dona - MizinhaDuCorte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@@phosphor-icons/web"></script>
+    <script>
+            tailwind.config = {
+                darkMode: 'class',
+                theme: {
+                    extend: { colors: { brand: '#EAB308' } }
+                }
+            }
+    </script>
+    <script>
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+    </script>
+</head>
+<body class="bg-[#f1f5f9] dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors">
+
+    <!-- Topo Amarelo Ouro -->
+    <header class="bg-[#eab308] text-slate-950 px-8 py-4 flex justify-between items-center shadow-md">
+        <h1 class="font-bold text-lg">Painel de Controle - MizinhaDuCorte</h1>
+        <div class="flex items-center gap-4 text-sm font-semibold">
+            <button id="btn-toggle-admin-theme" class="hover:opacity-80 flex items-center gap-1" title="Alternar Tema">
+                <i class="ph-bold ph-moon text-lg dark:hidden"></i>
+                <i class="ph-bold ph-sun text-lg hidden dark:inline"></i>
+            </button>
+            <a href="/" class="hover:underline">Ver o Site</a>
+            <form method="post" action="/Admin/Logout" class="inline">
+                <button type="submit" class="bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-slate-800 transition">Sair</button>
+            </form>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto p-6 md:p-8 space-y-8">
+
+        <!-- Resumo Financeiro -->
+        <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="font-bold text-slate-800 dark:text-white text-base">Resumo Financeiro</h2>
+                <form method="get" action="/Admin/Index">
+                    <input type="hidden" name="mes" value="@mesAtual" />
+                    <input type="hidden" name="ano" value="@anoAtual" />
+                    <select name="filtro" onchange="this.form.submit()" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none">
+                        <option value="mes" selected="@(filtroAtual == "mes")">Este Mês</option>
+                        <option value="hoje" selected="@(filtroAtual == "hoje")">Hoje</option>
+                        <option value="semana" selected="@(filtroAtual == "semana")">Últimos 7 dias</option>
+                        <option value="ano" selected="@(filtroAtual == "ano")">Este Ano</option>
+                        <option value="tudo" selected="@(filtroAtual == "tudo")">Todo o Período</option>
+                    </select>
+                </form>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-[#ebf5ff] dark:bg-slate-950/60 p-5 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                    <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">FATURAMENTO CONCLUÍDO</p>
+                    <h3 class="text-3xl font-black text-slate-900 dark:text-white">R$ @faturamento.ToString("N2", culturePt)</h3>
+                </div>
+
+                <div class="bg-[#f5f3ff] dark:bg-slate-950/60 p-5 rounded-xl border border-purple-100 dark:border-purple-900/30">
+                    <p class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-1">CLIENTES ATENDIDOS</p>
+                    <h3 class="text-3xl font-black text-slate-900 dark:text-white">@totalClientes</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calendário Mensal Visual com Navegação por Meses -->
+        <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <h2 class="font-bold text-slate-900 dark:text-white text-base capitalize">
+                        Visão Mensal da Agenda - @nomeMes
+                    </h2>
+                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                        <a href="/Admin/Index?mes=@ViewBag.MesAnterior&ano=@ViewBag.AnoAnterior&filtro=@filtroAtual" class="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Mês Anterior">
+                            <i class="ph-bold ph-caret-left text-sm"></i>
+                        </a>
+                        <a href="/Admin/Index?mes=@DateTime.Today.Month&ano=@DateTime.Today.Year&filtro=@filtroAtual" class="px-2 py-0.5 text-[11px] font-bold hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Mês Atual">
+                            Hoje
+                        </a>
+                        <a href="/Admin/Index?mes=@ViewBag.MesProximo&ano=@ViewBag.AnoProximo&filtro=@filtroAtual" class="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Próximo Mês">
+                            <i class="ph-bold ph-caret-right text-sm"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 text-xs font-semibold">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Aberto</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Fechado</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 border-2 border-rose-500 inline-block"></span> Aberto (C/ Bloqueio Parcial)</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-400 uppercase mb-2">
+                <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+            </div>
+
+            <div class="grid grid-cols-7 gap-2">
+                @for (int i = 0; i < diaDaSemanaInicio; i++)
+                {
+                    <div class="h-14 rounded-xl bg-slate-50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/40"></div>
+                }
+
+                @for (int diaNum = 1; diaNum <= diasNoMes; diaNum++)
+                {
+                    DateOnly dataAtual = new DateOnly(anoAtual, mesAtual, diaNum);
+                    var diaAbertoObj = diasAbertos.FirstOrDefault(d => d.Data == dataAtual);
+                    bool estaAberto = diaAbertoObj != null;
+
+                    var bloqueiosDia = bloqueios.Where(b => b.Data == dataAtual).ToList();
+                    bool bloqueioTotal = bloqueiosDia.Any(b => b.Hora == null);
+                    bool bloqueioParcial = bloqueiosDia.Any(b => b.Hora != null);
+
+                    var agendamentosDia = Model.Where(a => a.Data == dataAtual).ToList();
+
+                    string estiloDia = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+
+                    if (bloqueioTotal)
+                    {
+                        estiloDia = "bg-rose-500 text-white font-bold border-rose-600 shadow-sm";
+                    }
+                    else if (estaAberto && bloqueioParcial)
+                    {
+                        estiloDia = "bg-emerald-500 text-white font-bold border-2 border-rose-500 shadow-sm relative";
+                    }
+                    else if (estaAberto)
+                    {
+                        estiloDia = "bg-emerald-500 text-white font-bold border-emerald-600 shadow-sm";
+                    }
+
+                    string dataFormatted = dataAtual.ToString("dd/MM/yyyy");
+                    string horaInicioStr = diaAbertoObj != null ? diaAbertoObj.HoraInicio.ToString("HH:mm") : "08:00";
+                    string horaFimStr = diaAbertoObj != null ? diaAbertoObj.HoraFim.ToString("HH:mm") : "20:00";
+                    string bloqueiosStr = string.Join(", ", bloqueiosDia.Where(b => b.Hora != null).Select(b => b.Hora.Value.ToString("HH:mm")));
+                    string agendamentosStr = string.Join("|", agendamentosDia.Select(a => $"{a.NomeCliente} ({a.Hora.ToString("HH:mm")} - {a.ServicoNome})"));
+
+                    <div onclick="abrirModalDia('@dataFormatted', @(estaAberto && !bloqueioTotal ? "true" : "false"), '@horaInicioStr', '@horaFimStr', '@bloqueiosStr', '@agendamentosStr')"
+                         class="h-14 rounded-xl flex flex-col items-center justify-center border text-sm transition cursor-pointer hover:scale-105 @estiloDia" title="Clique para ver detalhes do dia @dataFormatted">
+                        <span>@diaNum</span>
+                        @if (estaAberto && bloqueioParcial)
+                        {
+                            <span class="w-2 h-2 rounded-full bg-rose-500 absolute top-1 right-1" title="Possui horários específicos bloqueados"></span>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <!-- Modal de Detalhes do Dia -->
+        <div id="modal-dia" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h3 class="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                        <i class="ph-bold ph-calendar text-brand text-lg"></i> Detalhes do Dia <span id="modal-data-titulo"></span>
+                    </h3>
+                    <button onclick="fecharModalDia()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-3 text-xs">
+                    <!-- Status de Abertura -->
+                    <div class="p-3 rounded-xl border flex items-center justify-between" id="modal-status-box">
+                        <span class="font-bold" id="modal-status-texto"></span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" id="modal-status-badge"></span>
+                    </div>
+
+                    <!-- Horário de Funcionamento -->
+                    <div id="modal-horario-box" class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Horário de Atendimento</p>
+                        <p class="font-bold text-slate-800 dark:text-slate-100" id="modal-horario-texto"></p>
+                    </div>
+
+                    <!-- Horários Bloqueados -->
+                    <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Horários Específicos Bloqueados</p>
+                        <div id="modal-bloqueios-lista" class="font-semibold text-rose-500"></div>
+                    </div>
+
+                    <!-- Agendamentos Marcados -->
+                    <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Agendamentos do Dia</p>
+                        <div id="modal-agendamentos-lista" class="space-y-1 text-slate-700 dark:text-slate-300"></div>
+                    </div>
+                </div>
+
+                <button onclick="fecharModalDia()" class="w-full bg-slate-900 dark:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-slate-800 dark:hover:bg-slate-700 transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+
+        <!-- Controle da Agenda (Liberar / Bloquear) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Liberar Agenda -->
+            <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
+                <h2 class="font-bold text-slate-900 dark:text-white">Liberar Agenda</h2>
+                <form method="post" action="/Admin/SalvarDiaAberto" class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Data a Abrir</label>
+                        <input type="date" name="Data" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Abrir às</label>
+                            <input type="time" name="HoraInicio" value="08:00" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Fechar às</label>
+                            <input type="time" name="HoraFim" value="20:00" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm">
+                        Confirmar Abertura
+                    </button>
+                </form>
+            </section>
+
+            <!-- Bloquear Agenda -->
+            <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
+                <h2 class="font-bold text-slate-900 dark:text-white">Bloquear / Fechar Agenda</h2>
+                <form method="post" action="/Admin/SalvarBloqueio" class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Data a Bloquear</label>
+                        <input type="date" name="Data" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Horário Específico (Vazio = Dia Inteiro)</label>
+                        <input type="time" name="Hora" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                    </div>
+                    <button type="submit" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm">
+                        Confirmar Bloqueio
+                    </button>
+                </form>
+            </section>
+        </div>
+
+        <!-- CRUD de Serviços e Produtos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Gerenciar Serviços -->
+            <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
+                <h2 class="font-bold text-slate-900 dark:text-white">Gerenciar Serviços</h2>
+
+                <form id="form-servico" method="post" action="/Admin/SalvarServico" class="space-y-3">
+                    <input type="hidden" id="servico-id" name="Id" value="0" />
+                    <div class="grid grid-cols-3 gap-3">
+                        <input type="text" id="servico-nome" name="Nome" placeholder="Nome do Serviço" required class="col-span-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                        <input type="text" id="servico-preco" name="Preco" placeholder="Preço (ex: 29.99)" required class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                    </div>
+                    <div class="flex gap-3">
+                        <input type="text" id="servico-tempo" name="Tempo" placeholder="Duração (ex: 30 min)" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                        <button type="submit" id="btn-servico-salvar" class="bg-slate-900 dark:bg-brand text-white dark:text-slate-950 font-bold px-4 py-2 rounded-lg text-xs hover:opacity-90 transition">Salvar</button>
+                    </div>
+                </form>
+
+                <div class="overflow-x-auto pt-2">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 uppercase font-bold">
+                            <tr>
+                                <th class="p-2">Serviço</th>
+                                <th class="p-2">Preço</th>
+                                <th class="p-2 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @foreach (var s in servicos)
+                            {
+                                <tr>
+                                    <td class="p-2 font-semibold">@s.Nome <span class="text-[10px] text-slate-400">(@s.Tempo)</span></td>
+                                    <td class="p-2 font-bold text-brand">R$ @s.Preco.ToString("N2", culturePt)</td>
+                                    <td class="p-2 text-right">
+                                        <button onclick="editarServico(@s.Id, '@s.Nome', '@s.Preco.ToString(CultureInfo.InvariantCulture)', '@s.Tempo')" class="text-blue-500 font-bold mr-2 hover:underline">Editar</button>
+                                        <form method="post" action="/Admin/ExcluirServico" class="inline" onsubmit="return confirm('Excluir serviço?')">
+                                            <input type="hidden" name="id" value="@s.Id" />
+                                            <button type="submit" class="text-red-500 font-bold hover:underline">Excluir</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Estoque de Produtos -->
+            <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
+                <h2 class="font-bold text-slate-900 dark:text-white">Estoque de Produtos</h2>
+
+                <form id="form-produto" method="post" action="/Admin/SalvarProduto" class="space-y-3">
+                    <input type="hidden" id="produto-id" name="Id" value="0" />
+                    <div class="grid grid-cols-3 gap-3">
+                        <input type="text" id="produto-nome" name="Nome" placeholder="Nome do Produto" required class="col-span-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                        <input type="text" id="produto-preco" name="Preco" placeholder="Preço (ex: 29.99)" required class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                    </div>
+                    <div class="flex gap-3">
+                        <input type="number" id="produto-qtd" name="Quantidade" placeholder="Quantidade" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-white" />
+                        <button type="submit" id="btn-produto-salvar" class="bg-slate-900 dark:bg-brand text-white dark:text-slate-950 font-bold px-4 py-2 rounded-lg text-xs hover:opacity-90 transition">Salvar</button>
+                    </div>
+                </form>
+
+                <div class="overflow-x-auto pt-2">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 uppercase font-bold">
+                            <tr>
+                                <th class="p-2">Produto</th>
+                                <th class="p-2">Preço</th>
+                                <th class="p-2">Qtd</th>
+                                <th class="p-2 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @foreach (var p in produtos)
+                            {
+                                <tr>
+                                    <td class="p-2 font-semibold">@p.Nome</td>
+                                    <td class="p-2 font-bold text-brand">R$ @p.Preco.ToString("N2", culturePt)</td>
+                                    <td class="p-2">@p.Quantidade</td>
+                                    <td class="p-2 text-right">
+                                        <button onclick="editarProduto(@p.Id, '@p.Nome', '@p.Preco.ToString(CultureInfo.InvariantCulture)', @p.Quantidade)" class="text-blue-500 font-bold mr-2 hover:underline">Editar</button>
+                                        <form method="post" action="/Admin/ExcluirProduto" class="inline" onsubmit="return confirm('Excluir produto?')">
+                                            <input type="hidden" name="id" value="@p.Id" />
+                                            <button type="submit" class="text-red-500 font-bold hover:underline">Excluir</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- Agenda de Clientes -->
+        <section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                <h2 class="font-bold text-slate-900 dark:text-white">Agenda de Clientes</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-100 dark:border-slate-800 uppercase">
+                        <tr>
+                            <th class="p-4">Cliente</th>
+                            <th class="p-4">Serviço / Valor</th>
+                            <th class="p-4">Data / Hora</th>
+                            <th class="p-4 text-center">Status</th>
+                            <th class="p-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-950/40">
+                                <td class="p-4 font-bold text-slate-800 dark:text-slate-100">
+                                    @item.NomeCliente
+                                    <span class="block text-[11px] text-slate-400 font-normal">@item.Telefone</span>
+                                </td>
+                                <td class="p-4">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">@item.ServicoNome</span>
+                                    <span class="block text-[11px] text-brand font-bold">R$ @item.PrecoServico.ToString("N2", culturePt)</span>
+                                </td>
+                                <td class="p-4">
+                                    @item.Data.ToString("dd/MM/yyyy") às <b>@item.Hora.ToString("HH:mm")</b>
+                                </td>
+                                <td class="p-4 text-center">
+                                    @if (item.Status == "concluido")
+                                    {
+                                        <span class="px-2.5 py-1 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full text-[10px] font-bold">Concluído</span>
+                                    }
+                                    else if (item.Status == "falta")
+                                    {
+                                        <span class="px-2.5 py-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 rounded-full text-[10px] font-bold">Faltou</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2.5 py-1 bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 rounded-full text-[10px] font-bold">Pendente</span>
+                                    }
+                                </td>
+                                <td class="p-4 text-right">
+                                    <div class="flex justify-end gap-1">
+                                        @if (item.Status != "concluido")
+                                        {
+                                            <form method="post" action="/Admin/AlterarStatus">
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <input type="hidden" name="novoStatus" value="concluido" />
+                                                <button type="submit" title="Marcar Concluído" class="px-2 py-1 bg-green-50 text-green-600 rounded border border-green-200 font-bold hover:bg-green-100">✔ Concluir</button>
+                                            </form>
+                                        }
+                                        @if (item.Status != "falta")
+                                        {
+                                            <form method="post" action="/Admin/AlterarStatus">
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <input type="hidden" name="novoStatus" value="falta" />
+                                                <button type="submit" title="Marcar Falta" class="px-2 py-1 bg-yellow-50 text-yellow-600 rounded border border-yellow-200 font-bold hover:bg-yellow-100">✖ Falta</button>
+                                            </form>
+                                        }
+                                        <form method="post" action="/Admin/ExcluirAgendamento" onsubmit="return confirm('Excluir este agendamento?')">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" title="Excluir Agendamento" class="px-2 py-1 bg-red-50 text-red-600 rounded border border-red-200 font-bold hover:bg-red-100">🗑 Excluir</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer class="text-center text-xs text-slate-400 pt-4">
+            Painel Administrativo - MizinhaDuCorte &copy; @DateTime.Now.Year
+        </footer>
+    </div>
+
+    <script>
+            // Modal do Calendário
+            function abrirModalDia(dataStr, estaAberto, horaInicio, horaFim, bloqueiosStr, agendamentosStr) {
+                document.getElementById('modal-data-titulo').innerText = dataStr;
+
+                const statusBox = document.getElementById('modal-status-box');
+                const statusTexto = document.getElementById('modal-status-texto');
+                const statusBadge = document.getElementById('modal-status-badge');
+                const horarioBox = document.getElementById('modal-horario-box');
+                const horarioTexto = document.getElementById('modal-horario-texto');
+
+                if (estaAberto) {
+                    statusBox.className = "p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-between";
+                    statusTexto.innerText = "Status: Barbearia Aberta";
+                    statusTexto.className = "font-bold text-emerald-700 dark:text-emerald-400";
+                    statusBadge.innerText = "ABERTO";
+                    statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white";
+
+                    horarioBox.classList.remove('hidden');
+                    horarioTexto.innerText = `${horaInicio} às ${horaFim}`;
+                } else {
+                    statusBox.className = "p-3 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 flex items-center justify-between";
+                    statusTexto.innerText = "Status: Barbearia Fechada";
+                    statusTexto.className = "font-bold text-rose-700 dark:text-rose-400";
+                    statusBadge.innerText = "FECHADO";
+                    statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white";
+
+                    horarioBox.classList.add('hidden');
+                }
+
+                // Bloqueios
+                const bloqueiosDiv = document.getElementById('modal-bloqueios-lista');
+                if (bloqueiosStr && bloqueiosStr.trim() !== '') {
+                    const lista = bloqueiosStr.split(', ');
+                    bloqueiosDiv.innerHTML = lista.map(h => `<span class="inline-block bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-md mr-1 mb-1 font-bold">🚫 ${h}</span>`).join('');
+                } else {
+                    bloqueiosDiv.innerHTML = '<span class="text-slate-400 italic">Nenhum horário individual bloqueado neste dia.</span>';
+                }
+
+                // Agendamentos
+                const agendamentosDiv = document.getElementById('modal-agendamentos-lista');
+                if (agendamentosStr && agendamentosStr.trim() !== '') {
+                    const listaAg = agendamentosStr.split('|');
+                    agendamentosDiv.innerHTML = listaAg.map(a => `<div class="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 font-semibold">✂️ ${a}</div>`).join('');
+                } else {
+                    agendamentosDiv.innerHTML = '<span class="text-slate-400 italic">Nenhum agendamento para esta data.</span>';
+                }
+
+                document.getElementById('modal-dia').classList.remove('hidden');
+            }
+
+            function fecharModalDia() {
+                document.getElementById('modal-dia').classList.add('hidden');
+            }
+
+            // Funções de Edição de Serviços e Produtos
+            function editarServico(id, nome, preco, tempo) {
+                document.getElementById('servico-id').value = id;
+                document.getElementById('servico-nome').value = nome;
+                document.getElementById('servico-preco').value = preco;
+                document.getElementById('servico-tempo').value = tempo;
+                document.getElementById('btn-servico-salvar').innerText = "Atualizar";
+            }
+
+            function editarProduto(id, nome, preco, qtd) {
+                document.getElementById('produto-id').value = id;
+                document.getElementById('produto-nome').value = nome;
+                document.getElementById('produto-preco').value = preco;
+                document.getElementById('produto-qtd').value = qtd;
+                document.getElementById('btn-produto-salvar').innerText = "Atualizar";
+            }
+
+            // Toggle do Tema
+            document.getElementById('btn-toggle-admin-theme')?.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+    </script>
+</body>
+</html>
