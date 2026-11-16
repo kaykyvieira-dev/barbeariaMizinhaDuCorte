@@ -15,6 +15,7 @@
     decimal faturamento = ViewBag.Faturamento != null ? (decimal)ViewBag.Faturamento : 0;
     int totalClientes = ViewBag.TotalClientes != null ? (int)ViewBag.TotalClientes : 0;
     string filtroAtual = ViewBag.FiltroAtual as string ?? "mes";
+    string statusFiltro = ViewBag.StatusFiltro as string ?? "";
 
     int mesAtual = ViewBag.MesAtual != null ? (int)ViewBag.MesAtual : DateTime.Today.Month;
     int anoAtual = ViewBag.AnoAtual != null ? (int)ViewBag.AnoAtual : DateTime.Today.Year;
@@ -34,19 +35,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@@phosphor-icons/web"></script>
     <script>
-            tailwind.config = {
-                darkMode: 'class',
-                theme: {
-                    extend: { colors: { brand: '#EAB308' } }
-                }
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: { colors: { brand: '#EAB308' } }
             }
+        }
     </script>
     <script>
-            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     </script>
 </head>
 <body class="bg-[#f1f5f9] dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors">
@@ -68,6 +69,17 @@
 
     <div class="max-w-6xl mx-auto p-6 md:p-8 space-y-8">
 
+        <!-- Atalho de Ação Rápida: Venda de Balcão -->
+        <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800">
+            <div>
+                <h3 class="font-bold text-slate-900 dark:text-white text-sm">Venda Rápida de Balcão</h3>
+                <p class="text-xs text-slate-500">Venda produtos na hora sem precisar de agendamento prévio.</p>
+            </div>
+            <a href="/Admin/VendaBalcao" class="bg-brand text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-md hover:bg-brandHover transition flex items-center gap-2">
+                <i class="ph-bold ph-plus-circle text-base"></i> Nova Venda Balcão
+            </a>
+        </div>
+
         <!-- Resumo Financeiro -->
         <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
             <div class="flex justify-between items-center">
@@ -75,6 +87,7 @@
                 <form method="get" action="/Admin/Index">
                     <input type="hidden" name="mes" value="@mesAtual" />
                     <input type="hidden" name="ano" value="@anoAtual" />
+                    <input type="hidden" name="statusFiltro" value="@statusFiltro" />
                     <select name="filtro" onchange="this.form.submit()" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none">
                         <option value="mes" selected="@(filtroAtual == "mes")">Este Mês</option>
                         <option value="hoje" selected="@(filtroAtual == "hoje")">Hoje</option>
@@ -106,13 +119,13 @@
                         Visão Mensal da Agenda - @nomeMes
                     </h2>
                     <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
-                        <a href="/Admin/Index?mes=@ViewBag.MesAnterior&ano=@ViewBag.AnoAnterior&filtro=@filtroAtual" class="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Mês Anterior">
+                        <a href="/Admin/Index?mes=@ViewBag.MesAnterior&ano=@ViewBag.AnoAnterior&filtro=@filtroAtual&statusFiltro=@statusFiltro" class="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Mês Anterior">
                             <i class="ph-bold ph-caret-left text-sm"></i>
                         </a>
-                        <a href="/Admin/Index?mes=@DateTime.Today.Month&ano=@DateTime.Today.Year&filtro=@filtroAtual" class="px-2 py-0.5 text-[11px] font-bold hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Mês Atual">
+                        <a href="/Admin/Index?mes=@DateTime.Today.Month&ano=@DateTime.Today.Year&filtro=@filtroAtual&statusFiltro=@statusFiltro" class="px-2 py-0.5 text-[11px] font-bold hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Mês Atual">
                             Hoje
                         </a>
-                        <a href="/Admin/Index?mes=@ViewBag.MesProximo&ano=@ViewBag.AnoProximo&filtro=@filtroAtual" class="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Próximo Mês">
+                        <a href="/Admin/Index?mes=@ViewBag.MesProximo&ano=@ViewBag.AnoProximo&filtro=@filtroAtual&statusFiltro=@statusFiltro" class="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-md transition text-slate-700 dark:text-slate-200" title="Próximo Mês">
                             <i class="ph-bold ph-caret-right text-sm"></i>
                         </a>
                     </div>
@@ -193,25 +206,21 @@
                 </div>
 
                 <div class="space-y-3 text-xs">
-                    <!-- Status de Abertura -->
                     <div class="p-3 rounded-xl border flex items-center justify-between" id="modal-status-box">
                         <span class="font-bold" id="modal-status-texto"></span>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" id="modal-status-badge"></span>
                     </div>
 
-                    <!-- Horário de Funcionamento -->
                     <div id="modal-horario-box" class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
                         <p class="text-[10px] font-bold text-slate-400 uppercase">Horário de Atendimento</p>
                         <p class="font-bold text-slate-800 dark:text-slate-100" id="modal-horario-texto"></p>
                     </div>
 
-                    <!-- Horários Bloqueados -->
                     <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
                         <p class="text-[10px] font-bold text-slate-400 uppercase">Horários Específicos Bloqueados</p>
                         <div id="modal-bloqueios-lista" class="font-semibold text-rose-500"></div>
                     </div>
 
-                    <!-- Agendamentos Marcados -->
                     <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
                         <p class="text-[10px] font-bold text-slate-400 uppercase">Agendamentos do Dia</p>
                         <div id="modal-agendamentos-lista" class="space-y-1 text-slate-700 dark:text-slate-300"></div>
@@ -226,7 +235,6 @@
 
         <!-- Controle da Agenda (Liberar / Bloquear) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Liberar Agenda -->
             <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
                 <h2 class="font-bold text-slate-900 dark:text-white">Liberar Agenda</h2>
                 <form method="post" action="/Admin/SalvarDiaAberto" class="space-y-3">
@@ -250,7 +258,6 @@
                 </form>
             </section>
 
-            <!-- Bloquear Agenda -->
             <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
                 <h2 class="font-bold text-slate-900 dark:text-white">Bloquear / Fechar Agenda</h2>
                 <form method="post" action="/Admin/SalvarBloqueio" class="space-y-3">
@@ -271,7 +278,6 @@
 
         <!-- CRUD de Serviços e Produtos -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Gerenciar Serviços -->
             <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
                 <h2 class="font-bold text-slate-900 dark:text-white">Gerenciar Serviços</h2>
 
@@ -316,7 +322,6 @@
                 </div>
             </section>
 
-            <!-- Estoque de Produtos -->
             <section class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 space-y-4">
                 <h2 class="font-bold text-slate-900 dark:text-white">Estoque de Produtos</h2>
 
@@ -364,17 +369,32 @@
             </section>
         </div>
 
-        <!-- Agenda de Clientes -->
+        <!-- Agenda de Clientes com Filtro por Status -->
         <section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 class="font-bold text-slate-900 dark:text-white">Agenda de Clientes</h2>
+                
+                <!-- Filtros por Status -->
+                <form method="get" action="/Admin/Index" class="flex items-center gap-2">
+                    <input type="hidden" name="filtro" value="@filtroAtual" />
+                    <input type="hidden" name="mes" value="@mesAtual" />
+                    <input type="hidden" name="ano" value="@anoAtual" />
+                    
+                    <select name="statusFiltro" onchange="this.form.submit()" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none">
+                        <option value="" selected="@(string.IsNullOrEmpty(statusFiltro))">Todos os Status</option>
+                        <option value="pendente" selected="@(statusFiltro == "pendente")">Pendentes</option>
+                        <option value="concluido" selected="@(statusFiltro == "concluido")">Concluídos</option>
+                        <option value="falta" selected="@(statusFiltro == "falta")">Faltas</option>
+                    </select>
+                </form>
             </div>
+            
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-100 dark:border-slate-800 uppercase">
                         <tr>
                             <th class="p-4">Cliente</th>
-                            <th class="p-4">Serviço / Valor</th>
+                            <th class="p-4">Serviço / Produto / Valor</th>
                             <th class="p-4">Data / Hora</th>
                             <th class="p-4 text-center">Status</th>
                             <th class="p-4 text-right">Ações</th>
@@ -446,87 +466,82 @@
     </div>
 
     <script>
-            // Modal do Calendário
-            function abrirModalDia(dataStr, estaAberto, horaInicio, horaFim, bloqueiosStr, agendamentosStr) {
-                document.getElementById('modal-data-titulo').innerText = dataStr;
+        function abrirModalDia(dataStr, estaAberto, horaInicio, horaFim, bloqueiosStr, agendamentosStr) {
+            document.getElementById('modal-data-titulo').innerText = dataStr;
 
-                const statusBox = document.getElementById('modal-status-box');
-                const statusTexto = document.getElementById('modal-status-texto');
-                const statusBadge = document.getElementById('modal-status-badge');
-                const horarioBox = document.getElementById('modal-horario-box');
-                const horarioTexto = document.getElementById('modal-horario-texto');
+            const statusBox = document.getElementById('modal-status-box');
+            const statusTexto = document.getElementById('modal-status-texto');
+            const statusBadge = document.getElementById('modal-status-badge');
+            const horarioBox = document.getElementById('modal-horario-box');
+            const horarioTexto = document.getElementById('modal-horario-texto');
 
-                if (estaAberto) {
-                    statusBox.className = "p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-between";
-                    statusTexto.innerText = "Status: Barbearia Aberta";
-                    statusTexto.className = "font-bold text-emerald-700 dark:text-emerald-400";
-                    statusBadge.innerText = "ABERTO";
-                    statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white";
+            if (estaAberto) {
+                statusBox.className = "p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-between";
+                statusTexto.innerText = "Status: Barbearia Aberta";
+                statusTexto.className = "font-bold text-emerald-700 dark:text-emerald-400";
+                statusBadge.innerText = "ABERTO";
+                statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white";
 
-                    horarioBox.classList.remove('hidden');
-                    horarioTexto.innerText = `${horaInicio} às ${horaFim}`;
-                } else {
-                    statusBox.className = "p-3 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 flex items-center justify-between";
-                    statusTexto.innerText = "Status: Barbearia Fechada";
-                    statusTexto.className = "font-bold text-rose-700 dark:text-rose-400";
-                    statusBadge.innerText = "FECHADO";
-                    statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white";
+                horarioBox.classList.remove('hidden');
+                horarioTexto.innerText = `${horaInicio} às ${horaFim}`;
+            } else {
+                statusBox.className = "p-3 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 flex items-center justify-between";
+                statusTexto.innerText = "Status: Barbearia Fechada";
+                statusTexto.className = "font-bold text-rose-700 dark:text-rose-400";
+                statusBadge.innerText = "FECHADO";
+                statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white";
 
-                    horarioBox.classList.add('hidden');
-                }
-
-                // Bloqueios
-                const bloqueiosDiv = document.getElementById('modal-bloqueios-lista');
-                if (bloqueiosStr && bloqueiosStr.trim() !== '') {
-                    const lista = bloqueiosStr.split(', ');
-                    bloqueiosDiv.innerHTML = lista.map(h => `<span class="inline-block bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-md mr-1 mb-1 font-bold">🚫 ${h}</span>`).join('');
-                } else {
-                    bloqueiosDiv.innerHTML = '<span class="text-slate-400 italic">Nenhum horário individual bloqueado neste dia.</span>';
-                }
-
-                // Agendamentos
-                const agendamentosDiv = document.getElementById('modal-agendamentos-lista');
-                if (agendamentosStr && agendamentosStr.trim() !== '') {
-                    const listaAg = agendamentosStr.split('|');
-                    agendamentosDiv.innerHTML = listaAg.map(a => `<div class="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 font-semibold">✂️ ${a}</div>`).join('');
-                } else {
-                    agendamentosDiv.innerHTML = '<span class="text-slate-400 italic">Nenhum agendamento para esta data.</span>';
-                }
-
-                document.getElementById('modal-dia').classList.remove('hidden');
+                horarioBox.classList.add('hidden');
             }
 
-            function fecharModalDia() {
-                document.getElementById('modal-dia').classList.add('hidden');
+            const bloqueiosDiv = document.getElementById('modal-bloqueios-lista');
+            if (bloqueiosStr && bloqueiosStr.trim() !== '') {
+                const lista = bloqueiosStr.split(', ');
+                bloqueiosDiv.innerHTML = lista.map(h => `<span class="inline-block bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-md mr-1 mb-1 font-bold">🚫 ${h}</span>`).join('');
+            } else {
+                bloqueiosDiv.innerHTML = '<span class="text-slate-400 italic">Nenhum horário individual bloqueado neste dia.</span>';
             }
 
-            // Funções de Edição de Serviços e Produtos
-            function editarServico(id, nome, preco, tempo) {
-                document.getElementById('servico-id').value = id;
-                document.getElementById('servico-nome').value = nome;
-                document.getElementById('servico-preco').value = preco;
-                document.getElementById('servico-tempo').value = tempo;
-                document.getElementById('btn-servico-salvar').innerText = "Atualizar";
+            const agendamentosDiv = document.getElementById('modal-agendamentos-lista');
+            if (agendamentosStr && agendamentosStr.trim() !== '') {
+                const listaAg = agendamentosStr.split('|');
+                agendamentosDiv.innerHTML = listaAg.map(a => `<div class="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 font-semibold">✂️ ${a}</div>`).join('');
+            } else {
+                agendamentosDiv.innerHTML = '<span class="text-slate-400 italic">Nenhum agendamento para esta data.</span>';
             }
 
-            function editarProduto(id, nome, preco, qtd) {
-                document.getElementById('produto-id').value = id;
-                document.getElementById('produto-nome').value = nome;
-                document.getElementById('produto-preco').value = preco;
-                document.getElementById('produto-qtd').value = qtd;
-                document.getElementById('btn-produto-salvar').innerText = "Atualizar";
-            }
+            document.getElementById('modal-dia').classList.remove('hidden');
+        }
 
-            // Toggle do Tema
-            document.getElementById('btn-toggle-admin-theme')?.addEventListener('click', () => {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('theme', 'dark');
-                }
-            });
+        function fecharModalDia() {
+            document.getElementById('modal-dia').classList.add('hidden');
+        }
+
+        function editarServico(id, nome, preco, tempo) {
+            document.getElementById('servico-id').value = id;
+            document.getElementById('servico-nome').value = nome;
+            document.getElementById('servico-preco').value = preco;
+            document.getElementById('servico-tempo').value = tempo;
+            document.getElementById('btn-servico-salvar').innerText = "Atualizar";
+        }
+
+        function editarProduto(id, nome, preco, qtd) {
+            document.getElementById('produto-id').value = id;
+            document.getElementById('produto-nome').value = nome;
+            document.getElementById('produto-preco').value = preco;
+            document.getElementById('produto-qtd').value = qtd;
+            document.getElementById('btn-produto-salvar').innerText = "Atualizar";
+        }
+
+        document.getElementById('btn-toggle-admin-theme')?.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
     </script>
 </body>
 </html>

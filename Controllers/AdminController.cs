@@ -24,9 +24,17 @@ public class AdminController : Controller
         _configuration = configuration;
     }
 
-    public async Task<IActionResult> Index(string filtro = "mes", int? mes = null, int? ano = null)
+    public async Task<IActionResult> Index(string filtro = "mes", int? mes = null, int? ano = null, string statusFiltro = null)
     {
-        var agendamentos = await _context.Agendamentos
+        var query = _context.Agendamentos.AsQueryable();
+
+        // Filtro por Status (pendente, concluido, falta, etc.)
+        if (!string.IsNullOrEmpty(statusFiltro))
+        {
+            query = query.Where(a => a.Status == statusFiltro);
+        }
+
+        var agendamentos = await query
             .OrderByDescending(a => a.Data)
             .ThenByDescending(a => a.Hora)
             .ToListAsync();
@@ -65,6 +73,7 @@ public class AdminController : Controller
         ViewBag.Faturamento = concluidos.Sum(a => a.PrecoServico);
         ViewBag.TotalClientes = concluidos.Count();
         ViewBag.FiltroAtual = filtro;
+        ViewBag.StatusFiltro = statusFiltro;
 
         ViewBag.Servicos = await _context.Servicos.OrderBy(s => s.Nome).ToListAsync();
         ViewBag.Produtos = await _context.Produtos.OrderBy(p => p.Nome).ToListAsync();
@@ -73,6 +82,55 @@ public class AdminController : Controller
 
         return View(agendamentos);
     }
+
+    // --- NOVA FUNCIONALIDADE: VENDA RÁPIDA DE BALCÃO ---
+
+    [HttpGet]
+    public async Task<IActionResult> VendaBalcao()
+    {
+        // Lista apenas produtos que possuem estoque maior que zero
+        ViewBag.Produtos = await _context.Produtos
+            .Where(p => p.Quantidade > 0)
+            .OrderBy(p => p.Nome)
+            .ToListAsync();
+
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RegistrarVendaBalcao(string nomeCliente, string telefone, long produtoId)
+    {
+        var produto = await _context.Produtos.FindAsync(produtoId);
+        if (produto == null || produto.Quantidade <= 0)
+        {
+            TempData["Erro"] = "Produto indisponível ou esgotado.";
+            return RedirectToAction(nameof(VendaBalcao));
+        }
+
+        // Registra a venda de balcão diretamente como concluída
+        var novaVenda = new Agendamento
+        {
+            NomeCliente = string.IsNullOrEmpty(nomeCliente) ? "Cliente Balcão" : nomeCliente,
+            Telefone = string.IsNullOrEmpty(telefone) ? "Não informado" : telefone,
+            ServicoNome = $"Produto: {produto.Nome}",
+            PrecoServico = produto.Preco,
+            Data = DateOnly.FromDateTime(DateTime.Today),
+            Hora = TimeOnly.FromDateTime(DateTime.Now),
+            Status = "concluido"
+        };
+
+        // Dá baixa imediata no estoque do produto
+        produto.Quantidade -= 1;
+        _context.Produtos.Update(produto);
+
+        _context.Agendamentos.Add(novaVenda);
+        await _context.SaveChangesAsync();
+
+        TempData["Sucesso"] = $"Venda de {produto.Nome} registrada com sucesso!";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ---------------------------------------------------
 
     [HttpGet]
     [AllowAnonymous]
@@ -152,7 +210,6 @@ public class AdminController : Controller
     [HttpPost]
     public async Task<IActionResult> SalvarServico(Servico servico)
     {
-        // Tratamento da conversão de ponto/vírgula para evitar o erro de valor multiplicado por 100
         string precoStr = Request.Form["Preco"].ToString().Replace(',', '.');
         if (decimal.TryParse(precoStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal precoConvertido))
         {
@@ -183,7 +240,6 @@ public class AdminController : Controller
     [HttpPost]
     public async Task<IActionResult> SalvarProduto(Produto produto)
     {
-        // Tratamento da conversão de ponto/vírgula para evitar o erro de valor multiplicado por 100
         string precoStr = Request.Form["Preco"].ToString().Replace(',', '.');
         if (decimal.TryParse(precoStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal precoConvertido))
         {
