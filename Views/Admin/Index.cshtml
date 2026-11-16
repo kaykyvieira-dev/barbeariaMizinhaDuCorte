@@ -369,19 +369,28 @@
             </section>
         </div>
 
-        <!-- Agenda de Clientes com Filtro por Status -->
+        <!-- Agenda de Clientes com Filtros de Período e Status -->
         <section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h2 class="font-bold text-slate-900 dark:text-white">Agenda de Clientes</h2>
                 
-                <!-- Filtros por Status -->
-                <form method="get" action="/Admin/Index" class="flex items-center gap-2">
-                    <input type="hidden" name="filtro" value="@filtroAtual" />
+                <!-- Formulário de Filtros Combinados com Manutenção de Scroll -->
+                <form id="form-filtros" method="get" action="/Admin/Index" class="flex flex-wrap items-center gap-2">
                     <input type="hidden" name="mes" value="@mesAtual" />
                     <input type="hidden" name="ano" value="@anoAtual" />
                     
-                    <select name="statusFiltro" onchange="this.form.submit()" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none">
-                        <option value="" selected="@(string.IsNullOrEmpty(statusFiltro))">Todos os Status</option>
+                    <!-- Filtro de Período (Dia, Semana, Mês, etc.) -->
+                    <select name="filtro" onchange="salvarScrollEEnviar()" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none">
+                        <option value="hoje" selected="@(filtroAtual == "hoje")">📅 Apenas Hoje</option>
+                        <option value="semana" selected="@(filtroAtual == "semana")">📅 Últimos 7 Dias</option>
+                        <option value="mes" selected="@(filtroAtual == "mes")">📅 Este Mês</option>
+                        <option value="ano" selected="@(filtroAtual == "ano")">📅 Este Ano</option>
+                        <option value="tudo" selected="@(filtroAtual == "tudo")">📅 Todo o Período</option>
+                    </select>
+
+                    <!-- Filtro de Status -->
+                    <select name="statusFiltro" onchange="salvarScrollEEnviar()" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none">
+                        <option value="" selected="@(string.IsNullOrEmpty(statusFiltro))">🔍 Todos os Status</option>
                         <option value="pendente" selected="@(statusFiltro == "pendente")">Pendentes</option>
                         <option value="concluido" selected="@(statusFiltro == "concluido")">Concluídos</option>
                         <option value="falta" selected="@(statusFiltro == "falta")">Faltas</option>
@@ -466,6 +475,20 @@
     </div>
 
     <script>
+        // Funções para manter a posição da tela (Scroll) ao filtrar
+        function salvarScrollEEnviar() {
+            localStorage.setItem('scrollpos', window.scrollY);
+            document.getElementById('form-filtros').submit();
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const scrollpos = localStorage.getItem('scrollpos');
+            if (scrollpos) {
+                window.scrollTo(0, parseInt(scrollpos));
+                localStorage.removeItem('scrollpos');
+            }
+        });
+
         function abrirModalDia(dataStr, estaAberto, horaInicio, horaFim, bloqueiosStr, agendamentosStr) {
             document.getElementById('modal-data-titulo').innerText = dataStr;
 

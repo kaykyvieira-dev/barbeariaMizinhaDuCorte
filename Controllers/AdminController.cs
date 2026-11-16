@@ -107,15 +107,18 @@ public class AdminController : Controller
             return RedirectToAction(nameof(VendaBalcao));
         }
 
-        // Registra a venda de balcão diretamente como concluída
+        // Obtém o horário local exato para evitar divergência de fuso horário na nuvem
+        var agoraLocal = DateTime.Now;
+
+        // Registra a venda de balcão diretamente como concluída com data e hora exatas
         var novaVenda = new Agendamento
         {
             NomeCliente = string.IsNullOrEmpty(nomeCliente) ? "Cliente Balcão" : nomeCliente,
             Telefone = string.IsNullOrEmpty(telefone) ? "Não informado" : telefone,
             ServicoNome = $"Produto: {produto.Nome}",
             PrecoServico = produto.Preco,
-            Data = DateOnly.FromDateTime(DateTime.Today),
-            Hora = TimeOnly.FromDateTime(DateTime.Now),
+            Data = DateOnly.FromDateTime(agoraLocal.Date),
+            Hora = TimeOnly.FromDateTime(agoraLocal),
             Status = "concluido"
         };
 
